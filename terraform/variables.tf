@@ -1,7 +1,7 @@
 variable "proxmox_url" {
   description = "Proxmox API URL"
   type        = string
-  default     = "https://192.168.14.100:8006/api2/json"
+  default     = "https://192.168.14.4:8006/api2/json"
 }
 
 variable "proxmox_user" {
@@ -26,4 +26,15 @@ variable "ssh_public_key" {
   description = "SSH public key file path"
   type        = string
   default     = "~/.ssh/id_rsa.pub"
+}
+
+variable "proxmox_token_id" {
+  description = "Proxmox API token ID in format user@realm!tokenID"
+  type        = string
+}
+
+variable "proxmox_token_secret" {
+  description = "Proxmox API token secret"
+  type        = string
+  sensitive   = true
 }
