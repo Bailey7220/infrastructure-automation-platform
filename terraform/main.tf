@@ -23,12 +23,14 @@ resource "proxmox_vm_qemu" "web_server" {
   memory = 2048
   
   disk {
+    slot    = 0
     size    = "20G"
     type    = "scsi"
     storage = "local-lvm"
   }
   
   network {
+    id     = 0
     model  = "virtio"
     bridge = "vmbr0"
   }
@@ -50,12 +52,14 @@ resource "proxmox_vm_qemu" "monitoring_server" {
   memory = 4096
   
   disk {
+    slot    = 0
     size    = "30G"
     type    = "scsi"
     storage = "local-lvm"
   }
   
   network {
+    id     = 0
     model  = "virtio"
     bridge = "vmbr0"
   }
