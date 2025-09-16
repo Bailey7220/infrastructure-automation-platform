@@ -1,0 +1,32 @@
+---
+# Global variables for all hosts
+ansible_user: vagrant
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+# Docker configuration
+docker_packages:
+  - docker.io
+  - docker-compose
+  - python3-pip
+  - python3-docker
+
+# Common packages
+common_packages:
+  - curl
+  - wget
+  - htop
+  - vim
+  - git
+  - net-tools
+  - unzip
+
+# Application directories
+app_directories:
+  - /opt/apps
+  - /opt/logs
+  - /opt/config
+  - /opt/monitoring
+
+# User configuration
+app_user: "{{ ansible_user }}"
+app_group: "{{ ansible_user }}"

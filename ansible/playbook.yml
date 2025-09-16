@@ -1,0 +1,33 @@
+---
+- name: Configure all servers with common setup
+  hosts: all
+  become: false
+  gather_facts: true
+  roles:
+    - common
+
+- name: Configure web servers
+  hosts: web
+  become: false
+  roles:
+    - webserver
+
+- name: Configure monitoring servers
+  hosts: monitoring
+  become: false
+  roles:
+    - monitoring
+
+- name: Display deployment summary
+  hosts: all
+  become: false
+  tasks:
+    - name: Show deployment information
+      debug:
+        msg: |
+          ========================================
+          Server: {{ inventory_hostname }}
+          IP Address: {{ ansible_default_ipv4.address }}
+          Role: {{ group_names | join(', ') }}
+          Deployed: {{ ansible_date_time.iso8601 }}
+          ========================================
