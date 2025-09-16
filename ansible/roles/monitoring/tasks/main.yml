@@ -1,0 +1,86 @@
+---
+- name: Create monitoring directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  loop:
+    - /opt/monitoring
+    - /opt/monitoring/prometheus
+    - /opt/monitoring/grafana
+  become: true
+
+- name: Deploy Prometheus configuration
+  template:
+    src: prometheus.yml.j2
+    dest: /opt/monitoring/prometheus/prometheus.yml
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+  become: true
+
+- name: Deploy monitoring stack Docker Compose
+  template:
+    src: docker-compose-monitoring.yml.j2
+    dest: /opt/monitoring/docker-compose.yml
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+  become: true
+
+- name: Create Grafana provisioning directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  loop:
+    - /opt/monitoring/grafana/provisioning
+    - /opt/monitoring/grafana/provisioning/datasources
+    - /opt/monitoring/grafana/provisioning/dashboards
+  become: true
+
+- name: Deploy Grafana datasource configuration
+  template:
+    src: grafana-datasource.yml.j2
+    dest: /opt/monitoring/grafana/provisioning/datasources/prometheus.yml
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+  become: true
+
+- name: Pull monitoring Docker images
+  docker_image:
+    name: "{{ item }}"
+    source: pull
+  loop:
+    - prom/prometheus:latest
+    - grafana/grafana:latest
+    - prom/node-exporter:latest
+  become: false
+
+- name: Start monitoring stack
+  docker_compose:
+    project_src: /opt/monitoring
+    state: present
+    build: false
+  become: false
+
+- name: Wait for Prometheus to be ready
+  uri:
+    url: "http://{{ ansible_default_ipv4.address }}:9090/-/ready"
+    method: GET
+    status_code: 200
+  retries: 10
+  delay: 5
+
+- name: Wait for Grafana to be ready
+  uri:
+    url: "http://{{ ansible_default_ipv4.address }}:3000/api/health"
+    method: GET
+    status_code: 200
+  retries: 10
+  delay: 5

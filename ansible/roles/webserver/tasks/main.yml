@@ -1,0 +1,60 @@
+---
+- name: Create web application directory
+  file:
+    path: /opt/webapp
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  become: true
+
+- name: Create web content directory
+  file:
+    path: /opt/webapp/html
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  become: true
+
+- name: Deploy custom index.html
+  template:
+    src: index.html.j2
+    dest: /opt/webapp/html/index.html
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+  become: true
+
+- name: Deploy nginx configuration
+  template:
+    src: nginx.conf.j2
+    dest: /opt/webapp/nginx.conf
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+  become: true
+
+- name: Deploy Docker Compose for web application
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/webapp/docker-compose.yml
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+  become: true
+
+- name: Start web application containers
+  docker_compose:
+    project_src: /opt/webapp
+    state: present
+    build: false
+  become: false
+
+- name: Ensure web application is accessible
+  uri:
+    url: "http://{{ ansible_default_ipv4.address }}"
+    method: GET
+    status_code: 200
+  retries: 5
+  delay: 10

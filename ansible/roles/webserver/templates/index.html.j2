@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infrastructure Automation Platform</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 10px;
+        }
+        .header { text-align: center; margin-bottom: 30px; }
+        .info { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .status { color: #4CAF50; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Infrastructure Automation Platform</h1>
+            <p>Enterprise-grade automated deployment</p>
+        </div>
+        
+        <div class="info">
+            <h2>Deployment Information</h2>
+            <p><strong>Server:</strong> {{ inventory_hostname }}</p>
+            <p><strong>IP Address:</strong> {{ ansible_default_ipv4.address }}</p>
+            <p><strong>Deployed:</strong> {{ ansible_date_time.iso8601 }}</p>
+            <p><strong>Status:</strong> <span class="status">✅ OPERATIONAL</span></p>
+        </div>
+        
+        <div class="info">
+            <h2>Automation Stack</h2>
+            <ul>
+                <li>✅ <strong>Terraform:</strong> Infrastructure provisioning</li>
+                <li>✅ <strong>Ansible:</strong> Configuration management</li>
+                <li>✅ <strong>Docker:</strong> Container orchestration</li>
+                <li>✅ <strong>Nginx:</strong> Web server</li>
+            </ul>
+        </div>
+        
+        <div class="info">
+            <h2>System Information</h2>
+            <p><strong>OS:</strong> {{ ansible_distribution }} {{ ansible_distribution_version }}</p>
+            <p><strong>Architecture:</strong> {{ ansible_architecture }}</p>
+            <p><strong>Memory:</strong> {{ ansible_memtotal_mb }}MB</p>
+            <p><strong>CPU Cores:</strong> {{ ansible_processor_cores }}</p>
+        </div>
+    </div>
+</body>
+</html>
