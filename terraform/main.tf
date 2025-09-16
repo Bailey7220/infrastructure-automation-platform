@@ -71,3 +71,30 @@ resource "proxmox_vm_qemu" "monitoring_server" {
   
   ipconfig0 = "ip=dhcp"
 }
+
+resource "proxmox_vm_qemu" "vault_server" {
+  name        = "vault-001"
+  target_node = var.proxmox_node
+  clone       = "ubuntu-cloud-template"
+  cores       = 2
+  memory      = 2048
+
+  disk {
+    slot    = 0
+    size    = "10G"
+    type    = "scsi"
+    storage = "local-lvm"
+  }
+
+  network {
+    id     = 0
+    model  = "virtio"
+    bridge = "vmbr0"
+  }
+
+  os_type    = "cloud-init"
+  ciuser     = "vagrant"
+  cipassword = "vagrant"
+  sshkeys    = file(var.ssh_public_key)
+  ipconfig0  = "ip=dhcp"
+}
