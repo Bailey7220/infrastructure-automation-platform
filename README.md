@@ -477,13 +477,6 @@ git branch -d feature/new-vm-type
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📞 Support
-
-For issues and questions:
-1. Check the [Troubleshooting](#-troubleshooting) section
-2. Search existing [GitHub Issues](https://github.com/YourUsername/infrastructure-automation-platform/issues)
-3. Create a new issue with detailed information about your problem
-
 ---
 
 **Last Updated**: December 2025  
