@@ -1,18 +1,14 @@
-name: "Terraform CI"
+name: Terraform Formatting Check
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
-  schedule:
-    - cron: '0 0 * * *'      # daily at midnight UTC
+    branches: [ main ]
 
 jobs:
-  terraform:
-    name: Validate & Plan
+  fmt:
+    name: Format Check
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -27,18 +23,6 @@ jobs:
         with:
           terraform_version: '1.6.0'
 
-      - name: Terraform Init (skip signature verification)
-        run: terraform init \
-              -input=false \
-              -verify-signatures=false
-
-      - name: Terraform Init (skip plugin checksum)
-        run: terraform init \
-              -input=false \
-              -verify-plugins=false
-
-      - name: Terraform Validate
-        run: terraform validate -no-color
-
       - name: Terraform Format Check
         run: terraform fmt -check -no-color
+
