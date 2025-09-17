@@ -23,14 +23,14 @@ resource "proxmox_virtual_environment_vm" "web_server" {
   }
 
   cpu {
-    cores  = 2
-    type   = "host"
+    cores = 2
+    type  = "host"
   }
 
   memory {
     dedicated = 2048
   }
- 
+
   disk {
     datastore_id = "sas-disk1"
     interface    = "scsi0"
@@ -47,7 +47,7 @@ resource "proxmox_virtual_environment_vm" "web_server" {
   }
 
   initialization {
-    user_data_file_id        = "local:snippets/cloud-init.yaml"
+    user_data_file_id = "local:snippets/cloud-init.yaml"
 
     ip_config {
       ipv4 {
@@ -60,7 +60,7 @@ resource "proxmox_virtual_environment_vm" "web_server" {
       password = "vagrant"
       keys     = [file(var.ssh_public_key)]
     }
-} 
+  }
   agent {
     enabled = true
   }
@@ -74,7 +74,7 @@ resource "proxmox_virtual_environment_vm" "monitoring_server" {
   node_name   = var.proxmox_node
 
   clone {
-    vm_id = 300  
+    vm_id = 300
     full  = true
   }
 
@@ -103,7 +103,7 @@ resource "proxmox_virtual_environment_vm" "monitoring_server" {
   }
 
   initialization {
-    user_data_file_id        = "local:snippets/cloud-init.yaml"
+    user_data_file_id = "local:snippets/cloud-init.yaml"
 
     ip_config {
       ipv4 {
@@ -130,7 +130,7 @@ resource "proxmox_virtual_environment_vm" "vault_server" {
   node_name   = var.proxmox_node
 
   clone {
-    vm_id = 300  
+    vm_id = 300
     full  = true
   }
 
@@ -159,7 +159,7 @@ resource "proxmox_virtual_environment_vm" "vault_server" {
   }
 
   initialization {
-    user_data_file_id        = "local:snippets/cloud-init.yaml"
+    user_data_file_id = "local:snippets/cloud-init.yaml"
 
 
     ip_config {
