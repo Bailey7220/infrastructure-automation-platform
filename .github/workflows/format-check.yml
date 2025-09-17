@@ -1,4 +1,4 @@
-name: Terraform Formatting Check
+name: Terraform Format Check
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   fmt:
-    name: Format Check
+    name: Ensure Terraform Is Formatted
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,4 +25,3 @@ jobs:
 
       - name: Terraform Format Check
         run: terraform fmt -check -no-color
-
