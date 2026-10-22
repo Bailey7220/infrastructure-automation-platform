@@ -8,7 +8,6 @@ terraform {
 }
 
 provider "proxmox" {
-
 }
 
 resource "proxmox_virtual_environment_vm" "web_server" {
@@ -57,15 +56,14 @@ resource "proxmox_virtual_environment_vm" "web_server" {
 
     user_account {
       username = "vagrant"
-      password = "vagrant"
-      keys     = [file(var.ssh_public_key)]
+      keys     = [file(pathexpand(var.ssh_public_key))]
     }
   }
+
   agent {
     enabled = true
   }
 }
-
 
 resource "proxmox_virtual_environment_vm" "monitoring_server" {
   name        = "monitoring-001"
@@ -113,8 +111,7 @@ resource "proxmox_virtual_environment_vm" "monitoring_server" {
 
     user_account {
       username = "vagrant"
-      password = "vagrant"
-      keys     = [file(var.ssh_public_key)]
+      keys     = [file(pathexpand(var.ssh_public_key))]
     }
   }
 
@@ -161,7 +158,6 @@ resource "proxmox_virtual_environment_vm" "vault_server" {
   initialization {
     user_data_file_id = "local:snippets/cloud-init.yaml"
 
-
     ip_config {
       ipv4 {
         address = "dhcp"
@@ -170,8 +166,7 @@ resource "proxmox_virtual_environment_vm" "vault_server" {
 
     user_account {
       username = "vagrant"
-      password = "vagrant"
-      keys     = [file(var.ssh_public_key)]
+      keys     = [file(pathexpand(var.ssh_public_key))]
     }
   }
 
