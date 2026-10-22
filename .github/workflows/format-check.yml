@@ -33,3 +33,25 @@ jobs:
         working-directory: ansible
       - run: ansible-playbook --syntax-check -i inventory.ini playbook.yml
         working-directory: ansible
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check shell script line endings and syntax without execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          scripts=(scripts/*.sh)
+          if (( ${#scripts[@]} == 0 )); then
+            printf '%s\n' 'No shell scripts found in scripts/.' >&2
+            exit 1
+          fi
+          for script in "${scripts[@]}"; do
+            if LC_ALL=C grep -q $'\r' "$script"; then
+              printf 'Carriage return found in %s; use LF line endings.\n' "$script" >&2
+              exit 1
+            fi
+            bash -n "$script"
+            printf 'Syntax and line-ending checks passed: %s\n' "$script"
+          done
