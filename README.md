@@ -2,7 +2,7 @@
 
 A personal infrastructure-as-code project using Terraform VM definitions and Ansible roles to practice repeatable Proxmox lab setup.
 
-> The hardware is currently powered off. Source configuration and static-check workflows are present; passing CI and a fresh end-to-end deployment have not been verified.
+> The hardware is currently powered off. The repository owner reported that both GitHub static-check jobs passed on October 22, 2026, following the Terraform 1.6.1 patch update. Run evidence has not been independently recorded here; a fresh end-to-end deployment remains unverified.
 
 [Status](PROJECT_STATUS.md) | [Terraform](terraform/) | [Ansible](ansible/) | [Pipeline guide](docs/PIPELINE.md) | [Security remediation](docs/SECURITY_REMEDIATION.md) | [Homelab](https://github.com/Bailey7220/Systems_and_Security_Homelab)
 
@@ -25,7 +25,7 @@ Inventory setup is manual. This is a learning project, not a verified production
 - Monitoring HTTP readiness checks against guest loopback, with explicit retries.
 - Static-only GitHub and GitLab checks; no CI apply, destroy, or Ansible deployment.
 
-Source implementation does not prove these tasks have executed successfully.
+Source implementation and passing static checks do not prove these roles have executed successfully on guests.
 
 ## VM definitions
 
@@ -47,7 +47,9 @@ The provider uses externally supplied `PROXMOX_VE_ENDPOINT` plus `PROXMOX_VE_USE
 
 ## Static validation
 
-The workflows select Terraform 1.6.0, Ansible Core 2.16.14, and community.docker 3.13.3. These are existing compatibility pins, not a claim of a currently supported or tested toolchain. Plan a supported-toolchain upgrade separately.
+The workflows select Terraform 1.6.1, Ansible Core 2.16.14, and community.docker 3.13.3. These are compatibility pins, not a claim of a currently supported toolchain. Plan a supported-toolchain upgrade separately.
+
+On October 22, 2026, the repository owner reported both GitHub jobs passing after commit `e8652e7a51960ce972bc01026a3ef27475c33611` changed the Terraform CLI pins from 1.6.0 to 1.6.1. This addressed the reported provider-installation failure, `openpgp: key expired`, without changing the Proxmox provider version or lockfile. The run URL and logs have not been independently recorded here. GitLab results and lab deployment remain unverified. See the [pipeline guide](docs/PIPELINE.md) for scope and evidence requirements.
 
 From the repository root, with Terraform and the selected Ansible Core installed:
 
@@ -60,7 +62,7 @@ ansible-galaxy collection install -r requirements.yml
 ansible-playbook --syntax-check -i inventory.ini playbook.yml
 ```
 
-Registry and collection installation require network access. The inventory contains no active hosts. Syntax checks do not establish working privileges, guest package availability, service health, or deployment success. Inspect job logs for the exact commit before claiming CI passes.
+Registry and collection installation require network access. The inventory contains no active hosts. Syntax checks do not establish working privileges, guest package availability, service health, or deployment success. Inspect job logs for the exact commit before extending a passing-CI claim to later changes.
 
 ## Runtime prerequisites and limitations
 
