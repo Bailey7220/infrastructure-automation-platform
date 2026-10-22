@@ -1,18 +1,26 @@
 # Proxmox Infrastructure Automation Lab
 
-A personal infrastructure-as-code project using Terraform VM definitions and Ansible configuration roles to practice repeatable Proxmox lab setup.
+A personal infrastructure-as-code project using Terraform VM definitions and Ansible roles to practice repeatable Proxmox lab setup.
 
-[Status](PROJECT_STATUS.md) | [Terraform](terraform/) | [Ansible](ansible/) | [Related homelab](https://github.com/Bailey7220/Systems_and_Security_Homelab)
+> Personal lab project; the hardware is currently powered off. Static validation and deployment status are documented in the [project status log](PROJECT_STATUS.md). A working end-to-end deployment is not currently verified.
 
-## Purpose and workflow
+[Terraform](terraform/) | [Ansible](ansible/) | [Pipeline guide](docs/PIPELINE.md) | [Security remediation](docs/SECURITY_REMEDIATION.md) | [Related homelab](https://github.com/Bailey7220/Systems_and_Security_Homelab)
 
-Practice VM resource definitions, role-based configuration management, and static validation:
+## Project scope
+
+- Terraform definitions for three Proxmox VMs.
+- Ansible roles for common setup, a web workload, and monitoring.
+- Static-validation GitHub and GitLab configurations.
+- Documentation of dependencies, security corrections, and remaining tests.
 
 ```text
-Terraform -> Proxmox VMs -> verified addresses -> local Ansible inventory
-Ansible roles -> guest configuration -> actual connectivity/service checks
+Terraform -> Proxmox VMs -> verified guest addresses -> local Ansible inventory
+Ansible roles -> guest configuration -> connectivity and service checks
 ```
-## VM definitions
+
+This is the intended workflow, not a verified automated pipeline. Inventory setup is manual.
+
+## VM configuration
 
 | VM | vCPU | RAM | Disk | Storage |
 |---|---:|---:|---:|---|
@@ -20,34 +28,22 @@ Ansible roles -> guest configuration -> actual connectivity/service checks
 | monitoring-001 | 2 | 4 GB | 30 GB | sas-disk1 |
 | vault-001 | 2 | 2 GB | 10 GB | sas-disk1 |
 
-All definitions clone template VM 300, attach to `vmbr0`, request DHCP, and reference `local:snippets/cloud-init.yaml`. Verify these lab-specific dependencies before planning. Template disks must be compatible with the requested sizes; this project does not implement disk shrinking. A Vault-designated VM does not establish a working Vault service.
+Definitions clone template VM 300, use `vmbr0` and DHCP, and reference `local:snippets/cloud-init.yaml`. These dependencies must exist in the actual lab. Template disks must support the requested target sizes; disk shrinking is not implemented. The Vault-designated VM does not establish a working Vault service.
 
-## Repository guide
+## Configuration and authentication
 
-- `terraform/`: VM definitions, inputs, outputs, lockfile, sanitized variable example.
-- `ansible/`: inventory template, playbook, configuration, common/webserver/monitoring roles.
-- `.github/workflows/` and `.gitlab-ci.yml`: static validation alternatives, not deployment automation.
-- `PROJECT_STATUS.md`: completed source changes and verification boundaries.
-- `docs/`, `scripts/`, `monitoring/`, `vault/`: supporting material not comprehensively revalidated.
+Copy `terraform/terraform.tfvars.example` to a local, ignored `terraform/terraform.tfvars` and set the actual node name and guest SSH public-key path.
 
-## Inputs and authentication
+The provider reads externally supplied environment variables:
 
-Copy `terraform/terraform.tfvars.example` to `terraform/terraform.tfvars` locally. Set the node name and public-key path; do not commit local values or secrets.
+- `PROXMOX_VE_ENDPOINT`: base HTTPS endpoint ending at port 8006, without `/api2/json`.
+- `PROXMOX_VE_USERNAME` and `PROXMOX_VE_PASSWORD`, or `PROXMOX_VE_API_TOKEN`.
 
-The empty provider block uses environment-variable authentication supported by the pinned `bpg/proxmox` version:
+Keep credentials outside Git and TLS verification enabled. Some provider operations also need node SSH access; API authentication does not establish that access. See the [pinned provider documentation](https://github.com/bpg/terraform-provider-proxmox/blob/v0.57.1/docs/index.md).
 
-- `PROXMOX_VE_ENDPOINT`: base URL such as `https://proxmox.example.invalid:8006/`, without `/api2/json`.
-- `PROXMOX_VE_USERNAME` and `PROXMOX_VE_PASSWORD`, or the `PROXMOX_VE_API_TOKEN` alternative, supplied outside Git.
-- Keep TLS verification enabled and configure certificate trust.
-- Operations requiring node SSH access need separate appropriate SSH configuration; API authentication alone does not establish it.
+## Validation
 
-Unused `proxmox_url`, `proxmox_user`, and `proxmox_password` Terraform inputs were removed. See the [pinned provider authentication reference](https://github.com/bpg/terraform-provider-proxmox/blob/v0.57.1/docs/index.md).
-
-## Static checks
-
-The pipelines select Terraform 1.6.0 and Ansible Core 2.16.14 for reproducibility, not as a claim that they are current or tested successfully here.
-
-From the repository root:
+The CI definitions select Terraform 1.6.0 and Ansible Core 2.16.14. These are configuration choices, not claims of current support or passing tests.
 
 ```sh
 terraform -chdir=terraform fmt -check
@@ -57,21 +53,34 @@ cd ansible
 ansible-playbook --syntax-check -i inventory.ini playbook.yml
 ```
 
-Initialization requires registry access. Syntax checks can reveal missing dependencies but do not prove role execution. The inventory intentionally has no active hosts. CI does not apply/destroy infrastructure or deploy Ansible changes.
+Provider initialization requires registry access. Ansible module resolution currently needs dependency work; the Docker/Compose roles are not deployment-ready. The empty inventory is a template. No passing CI run is asserted, and syntax checks do not prove application health.
 
-## Before local deployment
+## Deployment blockers
 
-1. Rotate the previously exposed credential and address historical copies. Current-branch deletion does not erase history.
-2. Preserve private Terraform state needed to manage existing VMs. Do not blindly apply against previously managed infrastructure with missing state.
-3. Verify provider permissions, template, storage, disk sizes, bridge, and guest-agent setup.
-4. Inspect the external cloud-init snippet and template. Source demo passwords were removed, but inherited passwords and SSH login policy have not been verified.
-5. Review the plan before authorizing changes; initialization edits can affect existing resources.
-6. Verify actual guest addresses. Convenience IP outputs may be null and do not guarantee the correct management interface.
-7. Populate local inventory and verify SSH fingerprints through a trusted channel. Choose the appropriate local SSH key or agent.
-8. Check Ansible privileges/dependencies and record actual deployment and health-test outcomes.
+- Rotate previously exposed credentials and assess historical copies. Current-branch removal does not erase history or invalidate credentials.
+- Preserve private Terraform state for existing VMs; do not blindly apply with missing state.
+- Verify the external cloud-init snippet, template credentials, guest-agent setup, storage, and network mapping.
+- Migrate legacy Compose tasks and define compatible Ansible collection dependencies.
+- Test readiness checks against loopback-bound monitoring ports. Supply Grafana credentials through an appropriate private runtime mechanism.
+- Deployment and cleanup scripts are disabled pending replacement and testing; do not treat them as working entry points.
+- Populate local inventory with verified guest addresses, verify SSH fingerprints through a trusted channel, and check role privileges before execution.
 
-## Cleanup and limitations
+Removing source passwords does not change existing guests or Grafana accounts. Container image version pinning and full supporting-file review remain unfinished.
 
-Tracked local variables, state/backup, and generated providers were removed from the current branch; the lockfile remains. Ignore rules reduce accidental re-addition, not historical exposure. The portable `.terraformrc` removes the old Windows mirror, but repository-root CLI configuration is not automatically loaded on every platform.
+## Repository guide
 
-No measured uptime, time savings, compliance score, working Vault service, or successful restore is claimed. There is currently no root license file, so no open-source license is asserted here.
+| Path | Purpose |
+|---|---|
+| `terraform/` | VM definitions, variables, outputs, lockfile, sanitized input example |
+| `ansible/` | Inventory template, playbook, configuration, roles |
+| `.github/workflows/` | GitHub static checks |
+| `.gitlab-ci.yml` | GitLab static checks |
+| `docs/` | Architecture, pipeline, and security material |
+| `scripts/` | Supporting scripts; deployment/cleanup currently disabled |
+| `monitoring/`, `vault/` | Supporting material, not proof of deployed services |
+
+## Evidence and limitations
+
+Tracked local credentials, state/backup, and downloaded provider artifacts were removed from the current branch. Ignore rules reduce accidental re-addition; the provider lockfile remains tracked. The portable `.terraformrc` no longer requires the old Windows mirror, but repository-root CLI config is not automatically loaded on every platform.
+
+No measured uptime, deployment/recovery time savings, compliance score, successful restore, or healthy live services are claimed. There is no root license file, so no open-source license is asserted.
