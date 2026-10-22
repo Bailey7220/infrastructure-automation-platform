@@ -1,0 +1,8 @@
+# Sanitized input example only. Review variables.tf and provider authentication.
+# Copy to terraform.tfvars locally; never commit real credentials.
+proxmox_url = "https://proxmox.example.invalid:8006/"
+proxmox_user = "terraform@pve"
+proxmox_node = "REPLACE_WITH_NODE_NAME"
+ssh_public_key = "~/.ssh/proxmox_lab.pub"
+# Do not place a password in this example.
+# The existing empty provider block does not consume these inputs automatically.

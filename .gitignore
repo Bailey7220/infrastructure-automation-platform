@@ -1,2 +1,32 @@
-# Terraform local overrides
-terraform.tfvars.local
+# Terraform generated data and local configuration
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+tfplan
+tfplan.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+*.tfvars.local
+!*.tfvars.example
+!*.tfvars.json.example
+.terraformrc
+terraform.rc
+# Provider lockfiles remain tracked.
+
+# Credentials and private keys
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# Ansible and local noise
+*.retry
+__pycache__/
+.DS_Store

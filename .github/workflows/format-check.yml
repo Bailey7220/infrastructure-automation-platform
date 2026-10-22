@@ -1,27 +1,37 @@
-name: Terraform Format Check
+name: Static Configuration Checks
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  fmt:
-    name: Ensure Terraform Is Formatted
+  terraform:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: terraform
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.6.0'
+      - run: terraform fmt -check -no-color
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate -no-color
 
-      - name: Terraform Format Check
-        run: terraform fmt -check -no-color
+  ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install 'ansible-core==2.16.14'
+      - run: ansible-playbook --syntax-check -i inventory.ini playbook.yml
+        working-directory: ansible
