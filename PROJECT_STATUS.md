@@ -1,26 +1,32 @@
 # Project Status
 
-The homelab is powered off. This is a learning project, not an operating production platform.
+The homelab is powered off. This is a learning project, not an operating production platform. Source edits are not evidence of successful execution.
 
-## Source changes completed
+## Existing source work
 
-- Validation-only GitHub and GitLab pipeline definitions.
-- Removed unsupported performance/uptime metrics and placeholder success jobs.
-- Removed tracked credential/local-variable files, state/backup, and generated provider artifacts from the current branch.
-- Expanded ignore rules while retaining the provider lockfile.
-- Removed hard-coded VM guest passwords and expanded SSH public-key paths.
-- Enabled SSH host-key checking without an inventory override.
-- Replaced the Windows-specific provider mirror with direct installation.
-- Removed unused authentication inputs; documented provider environment variables.
-- Added best-effort IP outputs and VM IDs for all three resources.
+- Static-validation GitHub and GitLab pipeline definitions are present. Passing runs are not verified here.
+- Current-branch local credential/state/provider-artifact cleanup was previously documented; historical remediation remains unverified.
+- Terraform authentication uses environment variables; address outputs are best-effort and may be null.
 
-## Still unverified or outstanding
+## Security corrections in this batch
 
-- Exposed credential rotation and historical-copy remediation.
-- Passing CI logs, fresh Terraform validation, and end-to-end deployment.
-- External cloud-init snippet, template credentials, disk-size compatibility, and SSH access.
-- Ansible role privileges, dependencies, and actual execution.
-- Running Vault/monitoring services and a successful backup restore.
-- Comprehensive review of supporting scripts and documentation.
+- Global SSH arguments now require host-key checking. Trusted host-key enrollment and actual connections remain untested.
+- Deployment and cleanup scripts now exit without executing infrastructure commands while replacement workflows are pending.
+- Removed the fixed Grafana password from the monitoring template. Compose requires GRAFANA_ADMIN_PASSWORD at runtime.
+- Monitoring port mappings now bind to host loopback; Prometheus lifecycle API enablement was removed.
+- These are source corrections only. Existing services, accounts, secrets, and historical copies were not changed.
 
-Removing a password from source does not update existing guests. Record actual commands, versions, logs, and outcomes before claiming deployment success or measured improvements.
+## Still outstanding
+
+- Rotate or revoke previously exposed credentials and assess historical copies.
+- Verify existing Grafana administrator credentials separately; template edits do not prove rotation.
+- Migrate Docker/Compose modules and define compatible Ansible collection dependencies.
+- Replace inaccurate pipeline documentation and review remaining supporting files.
+- Run static checks and record actual CI results.
+- Verify external cloud-init/template credentials, storage, disks, SSH access, and private Terraform state.
+- Replace and test deployment/cleanup workflows before re-enabling scripts.
+- Test monitoring readiness checks against the new loopback bindings.
+- Verify deployed services, backup restores, and end-to-end behavior before claiming success.
+- Select and test explicit container image versions; latest tags remain for now.
+
+See docs/SECURITY_REMEDIATION.md for operating boundaries.

@@ -1,16 +1,15 @@
 ---
-# Global variables for all hosts
+# Global variables for all hosts. Verify host keys before connecting.
 ansible_user: vagrant
-ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+ansible_ssh_common_args: '-o StrictHostKeyChecking=yes'
 
-# Docker configuration
+# Existing Docker dependencies; Compose v2 migration is still pending.
 docker_packages:
   - docker.io
   - docker-compose
   - python3-pip
   - python3-docker
 
-# Common packages
 common_packages:
   - curl
   - wget
@@ -20,13 +19,11 @@ common_packages:
   - net-tools
   - unzip
 
-# Application directories
 app_directories:
   - /opt/apps
   - /opt/logs
   - /opt/config
   - /opt/monitoring
 
-# User configuration
 app_user: "{{ ansible_user }}"
 app_group: "{{ ansible_user }}"
