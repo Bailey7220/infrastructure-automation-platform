@@ -2,25 +2,32 @@
 
 A personal infrastructure-as-code project using Terraform VM definitions and Ansible roles to practice repeatable Proxmox lab setup.
 
-> Personal lab project; the hardware is currently powered off. Static validation and deployment status are documented in the [project status log](PROJECT_STATUS.md). A working end-to-end deployment is not currently verified.
+> The hardware is currently powered off. Source configuration and static-check workflows are present; passing CI and a fresh end-to-end deployment have not been verified.
 
-[Terraform](terraform/) | [Ansible](ansible/) | [Pipeline guide](docs/PIPELINE.md) | [Security remediation](docs/SECURITY_REMEDIATION.md) | [Related homelab](https://github.com/Bailey7220/Systems_and_Security_Homelab)
+[Status](PROJECT_STATUS.md) | [Terraform](terraform/) | [Ansible](ansible/) | [Pipeline guide](docs/PIPELINE.md) | [Security remediation](docs/SECURITY_REMEDIATION.md) | [Homelab](https://github.com/Bailey7220/Systems_and_Security_Homelab)
 
-## Project scope
-
-- Terraform definitions for three Proxmox VMs.
-- Ansible roles for common setup, a web workload, and monitoring.
-- Static-validation GitHub and GitLab configurations.
-- Documentation of dependencies, security corrections, and remaining tests.
+## Intended workflow
 
 ```text
-Terraform -> Proxmox VMs -> verified guest addresses -> local Ansible inventory
-Ansible roles -> guest configuration -> connectivity and service checks
+Terraform -> Proxmox VMs -> verified addresses -> local Ansible inventory
+Common setup -> Compose v2 workloads -> local HTTP readiness checks
 ```
 
-This is the intended workflow, not a verified automated pipeline. Inventory setup is manual.
+Inventory setup is manual. This is a learning project, not a verified production deployment pipeline.
 
-## VM configuration
+## What is implemented in source
+
+- Three Proxmox VM definitions, with guest SSH public-key configuration.
+- Common, webserver, and monitoring Ansible roles using fully qualified modules.
+- Compose v2 application tasks; the common role checks for Compose 2.18 or newer.
+- Explicit community.docker collection requirement and CI installation.
+- Monitoring secret input passed to remote Compose under `no_log`.
+- Monitoring HTTP readiness checks against guest loopback, with explicit retries.
+- Static-only GitHub and GitLab checks; no CI apply, destroy, or Ansible deployment.
+
+Source implementation does not prove these tasks have executed successfully.
+
+## VM definitions
 
 | VM | vCPU | RAM | Disk | Storage |
 |---|---:|---:|---:|---|
@@ -28,59 +35,49 @@ This is the intended workflow, not a verified automated pipeline. Inventory setu
 | monitoring-001 | 2 | 4 GB | 30 GB | sas-disk1 |
 | vault-001 | 2 | 2 GB | 10 GB | sas-disk1 |
 
-Definitions clone template VM 300, use `vmbr0` and DHCP, and reference `local:snippets/cloud-init.yaml`. These dependencies must exist in the actual lab. Template disks must support the requested target sizes; disk shrinking is not implemented. The Vault-designated VM does not establish a working Vault service.
+Definitions clone template VM 300, use `vmbr0` and DHCP, and reference `local:snippets/cloud-init.yaml`. Verify these dependencies and template disk compatibility before planning. Disk shrinking is not implemented. The Vault-designated VM does not establish a working Vault service.
 
-## Configuration and authentication
+## Local inputs and authentication
 
-Copy `terraform/terraform.tfvars.example` to a local, ignored `terraform/terraform.tfvars` and set the actual node name and guest SSH public-key path.
+Copy `terraform/terraform.tfvars.example` to an ignored local `terraform/terraform.tfvars`. Set the actual node name and guest public-key path.
 
-The provider reads externally supplied environment variables:
+The provider uses externally supplied `PROXMOX_VE_ENDPOINT` plus `PROXMOX_VE_USERNAME`/`PROXMOX_VE_PASSWORD` or `PROXMOX_VE_API_TOKEN`. The endpoint is the base HTTPS URL on port 8006 without `/api2/json`. Keep TLS verification enabled. Some operations also require separately configured node SSH access.
 
-- `PROXMOX_VE_ENDPOINT`: base HTTPS endpoint ending at port 8006, without `/api2/json`.
-- `PROXMOX_VE_USERNAME` and `PROXMOX_VE_PASSWORD`, or `PROXMOX_VE_API_TOKEN`.
+[Authentication reference for the pinned provider](https://github.com/bpg/terraform-provider-proxmox/blob/v0.57.1/docs/index.md)
 
-Keep credentials outside Git and TLS verification enabled. Some provider operations also need node SSH access; API authentication does not establish that access. See the [pinned provider documentation](https://github.com/bpg/terraform-provider-proxmox/blob/v0.57.1/docs/index.md).
+## Static validation
 
-## Validation
+The workflows select Terraform 1.6.0, Ansible Core 2.16.14, and community.docker 3.13.3. These are existing compatibility pins, not a claim of a currently supported or tested toolchain. Plan a supported-toolchain upgrade separately.
 
-The CI definitions select Terraform 1.6.0 and Ansible Core 2.16.14. These are configuration choices, not claims of current support or passing tests.
+From the repository root, with Terraform and the selected Ansible Core installed:
 
 ```sh
 terraform -chdir=terraform fmt -check
 terraform -chdir=terraform init -backend=false
 terraform -chdir=terraform validate
 cd ansible
+ansible-galaxy collection install -r requirements.yml
 ansible-playbook --syntax-check -i inventory.ini playbook.yml
 ```
 
-Provider initialization requires registry access. Ansible module resolution currently needs dependency work; the Docker/Compose roles are not deployment-ready. The empty inventory is a template. No passing CI run is asserted, and syntax checks do not prove application health.
+Registry and collection installation require network access. The inventory contains no active hosts. Syntax checks do not establish working privileges, guest package availability, service health, or deployment success. Inspect job logs for the exact commit before claiming CI passes.
 
-## Deployment blockers
+## Runtime prerequisites and limitations
 
-- Rotate previously exposed credentials and assess historical copies. Current-branch removal does not erase history or invalidate credentials.
-- Preserve private Terraform state for existing VMs; do not blindly apply with missing state.
-- Verify the external cloud-init snippet, template credentials, guest-agent setup, storage, and network mapping.
-- Migrate legacy Compose tasks and define compatible Ansible collection dependencies.
-- Test readiness checks against loopback-bound monitoring ports. Supply Grafana credentials through an appropriate private runtime mechanism.
-- Deployment and cleanup scripts are disabled pending replacement and testing; do not treat them as working entry points.
-- Populate local inventory with verified guest addresses, verify SSH fingerprints through a trusted channel, and check role privileges before execution.
-
-Removing source passwords does not change existing guests or Grafana accounts. Container image version pinning and full supporting-file review remain unfinished.
+- Rotate exposed credentials and assess historical copies. Removing tracked files does not invalidate credentials or erase Git history.
+- Preserve private Terraform state needed for existing VMs; do not blindly apply with missing state.
+- Inspect the external cloud-init snippet and template credentials. Removing source passwords does not update existing guests.
+- Verify guest package availability: defaults request `docker.io` and `docker-compose-v2`. The common role checks Compose version; availability on the intended guest release is not verified.
+- Verify SSH fingerprints, inventory addresses, sudo, storage, networking, and guest-agent setup before execution.
+- Supply `grafana_admin_password` through an encrypted, untracked vars file. The monitoring role requires at least 16 characters and passes the value to remote Compose without logging it. This does not prove existing Grafana credentials were rotated.
+- Published monitoring ports bind to guest loopback. External access needs a deliberately configured secure path; local HTTP readiness is not proof of scraping, dashboards, or network isolation.
+- Deployment and cleanup scripts remain disabled until replacement workflows are reviewed and tested.
+- Container images still need explicit version selection and testing. Backups, restores, repeat execution, and fresh deployment remain unverified.
 
 ## Repository guide
 
-| Path | Purpose |
-|---|---|
-| `terraform/` | VM definitions, variables, outputs, lockfile, sanitized input example |
-| `ansible/` | Inventory template, playbook, configuration, roles |
-| `.github/workflows/` | GitHub static checks |
-| `.gitlab-ci.yml` | GitLab static checks |
-| `docs/` | Architecture, pipeline, and security material |
-| `scripts/` | Supporting scripts; deployment/cleanup currently disabled |
-| `monitoring/`, `vault/` | Supporting material, not proof of deployed services |
+`terraform/` contains provisioning definitions; `ansible/` contains configuration roles and requirements. Workflow files define static checks. `docs/`, `scripts/`, `monitoring/`, and `vault/` contain supporting material; remaining and inactive material has not been comprehensively reviewed.
 
-## Evidence and limitations
+Tracked local credentials, state/backup, and generated providers were removed from the current branch; the provider lockfile remains. Ignore rules do not remove historical copies. The portable `.terraformrc` no longer requires the old Windows mirror, but repository-root CLI configuration is not automatically loaded on every platform.
 
-Tracked local credentials, state/backup, and downloaded provider artifacts were removed from the current branch. Ignore rules reduce accidental re-addition; the provider lockfile remains tracked. The portable `.terraformrc` no longer requires the old Windows mirror, but repository-root CLI config is not automatically loaded on every platform.
-
-No measured uptime, deployment/recovery time savings, compliance score, successful restore, or healthy live services are claimed. There is no root license file, so no open-source license is asserted.
+No measured uptime, time savings, compliance score, working Vault service, or successful restore is claimed. No open-source license is asserted without a root license file.
