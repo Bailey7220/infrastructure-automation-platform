@@ -1,6 +1,15 @@
 ---
-- name: Create monitoring directories
-  file:
+- name: Require an explicitly supplied Grafana administrator secret
+  ansible.builtin.assert:
+    that:
+      - grafana_admin_password is defined
+      - grafana_admin_password is string
+      - (grafana_admin_password | default('') | length) >= 16
+    fail_msg: Supply grafana_admin_password in an encrypted local vars file, not Git.
+  no_log: true
+
+- name: Create monitoring configuration directories
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     owner: "{{ app_user }}"
@@ -10,77 +19,45 @@
     - /opt/monitoring
     - /opt/monitoring/prometheus
     - /opt/monitoring/grafana
-  become: true
-
-- name: Deploy Prometheus configuration
-  template:
-    src: prometheus.yml.j2
-    dest: /opt/monitoring/prometheus/prometheus.yml
-    owner: "{{ app_user }}"
-    group: "{{ app_group }}"
-    mode: '0644'
-  become: true
-
-- name: Deploy monitoring stack Docker Compose
-  template:
-    src: docker-compose-monitoring.yml.j2
-    dest: /opt/monitoring/docker-compose.yml
-    owner: "{{ app_user }}"
-    group: "{{ app_group }}"
-    mode: '0644'
-  become: true
-
-- name: Create Grafana provisioning directories
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ app_user }}"
-    group: "{{ app_group }}"
-    mode: '0755'
-  loop:
     - /opt/monitoring/grafana/provisioning
     - /opt/monitoring/grafana/provisioning/datasources
     - /opt/monitoring/grafana/provisioning/dashboards
   become: true
 
-- name: Deploy Grafana datasource configuration
-  template:
-    src: grafana-datasource.yml.j2
-    dest: /opt/monitoring/grafana/provisioning/datasources/prometheus.yml
+- name: Render monitoring configuration without embedding the secret
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
     owner: "{{ app_user }}"
     group: "{{ app_group }}"
     mode: '0644'
+  loop:
+    - {src: prometheus.yml.j2, dest: /opt/monitoring/prometheus/prometheus.yml}
+    - {src: docker-compose-monitoring.yml.j2, dest: /opt/monitoring/docker-compose.yml}
+    - {src: grafana-datasource.yml.j2, dest: /opt/monitoring/grafana/provisioning/datasources/prometheus.yml}
   become: true
 
-- name: Pull monitoring Docker images
-  docker_image:
-    name: "{{ item }}"
-    source: pull
-  loop:
-    - prom/prometheus:latest
-    - grafana/grafana:latest
-    - prom/node-exporter:latest
-  become: false
-
-- name: Start monitoring stack
-  docker_compose:
+- name: Start monitoring with an explicit remote runtime secret
+  community.docker.docker_compose_v2:
     project_src: /opt/monitoring
     state: present
-    build: false
-  become: false
+    build: never
+    pull: missing
+  environment:
+    GRAFANA_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
+  become: true
+  no_log: true
+  when: not ansible_check_mode
 
-- name: Wait for Prometheus to be ready
-  uri:
-    url: "http://{{ ansible_default_ipv4.address }}:9090/-/ready"
-    method: GET
+- name: Verify local monitoring HTTP readiness
+  ansible.builtin.uri:
+    url: "{{ item }}"
     status_code: 200
+  loop:
+    - http://127.0.0.1:9090/-/ready
+    - http://127.0.0.1:3000/api/health
+  register: monitoring_health
+  until: monitoring_health.status | default(0) == 200
   retries: 10
   delay: 5
-
-- name: Wait for Grafana to be ready
-  uri:
-    url: "http://{{ ansible_default_ipv4.address }}:3000/api/health"
-    method: GET
-    status_code: 200
-  retries: 10
-  delay: 5
+  when: not ansible_check_mode

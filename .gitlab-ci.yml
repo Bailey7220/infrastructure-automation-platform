@@ -1,7 +1,5 @@
-# Static checks only. No provisioning, service-health claims, or destruction.
-stages:
-  - validate
-
+# Static checks only; no infrastructure or service changes.
+stages: [validate]
 terraform_validate:
   stage: validate
   image:
@@ -12,7 +10,6 @@ terraform_validate:
     - terraform fmt -check -no-color
     - terraform init -backend=false -input=false
     - terraform validate -no-color
-
 ansible_syntax:
   stage: validate
   image: python:3.11-slim
@@ -20,4 +17,5 @@ ansible_syntax:
     - pip install 'ansible-core==2.16.14'
   script:
     - cd ansible
+    - ansible-galaxy collection install -r requirements.yml
     - ansible-playbook --syntax-check -i inventory.ini playbook.yml

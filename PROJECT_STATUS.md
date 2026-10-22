@@ -1,32 +1,27 @@
 # Project Status
 
-The homelab is powered off. This is a learning project, not an operating production platform. Source edits are not evidence of successful execution.
+The homelab is powered off. This is a learning project, not an operating production platform. Source changes are not execution evidence.
 
-## Existing source work
+## Source corrections present
 
-- Static-validation GitHub and GitLab pipeline definitions are present. Passing runs are not verified here.
-- Current-branch local credential/state/provider-artifact cleanup was previously documented; historical remediation remains unverified.
-- Terraform authentication uses environment variables; address outputs are best-effort and may be null.
-
-## Security corrections in this batch
-
-- Global SSH arguments now require host-key checking. Trusted host-key enrollment and actual connections remain untested.
-- Deployment and cleanup scripts now exit without executing infrastructure commands while replacement workflows are pending.
-- Removed the fixed Grafana password from the monitoring template. Compose requires GRAFANA_ADMIN_PASSWORD at runtime.
-- Monitoring port mappings now bind to host loopback; Prometheus lifecycle API enablement was removed.
-- These are source corrections only. Existing services, accounts, secrets, and historical copies were not changed.
+- Static-only GitHub and GitLab pipeline definitions; collection installation is now explicit.
+- SSH arguments require host-key checking; deploy and cleanup scripts remain blocked.
+- Monitoring template requires a runtime Grafana secret, binds published ports to loopback, and does not enable the Prometheus lifecycle API.
+- Added community.docker 3.13.3 as a compatibility bridge for the existing Core 2.16.14 pin, not a supported-toolchain claim.
+- Active web and monitoring tasks use fully qualified Compose v2 modules; common tasks no longer install pip Docker/Compose v1 packages or rely on newly granted Docker group access.
+- Common role checks Compose version and uses explicit privilege escalation for Docker operations.
+- Monitoring passes an explicit secret to remote Compose under no_log; endpoint checks use guest loopback with explicit retry conditions.
+- Pipeline documentation now describes static checks only.
+- Previously documented current-branch credential/state/artifact cleanup does not establish historical remediation.
 
 ## Still outstanding
 
-- Rotate or revoke previously exposed credentials and assess historical copies.
-- Verify existing Grafana administrator credentials separately; template edits do not prove rotation.
-- Migrate Docker/Compose modules and define compatible Ansible collection dependencies.
-- Replace inaccurate pipeline documentation and review remaining supporting files.
-- Run static checks and record actual CI results.
-- Verify external cloud-init/template credentials, storage, disks, SSH access, and private Terraform state.
-- Replace and test deployment/cleanup workflows before re-enabling scripts.
-- Test monitoring readiness checks against the new loopback bindings.
-- Verify deployed services, backup restores, and end-to-end behavior before claiming success.
-- Select and test explicit container image versions; latest tags remain for now.
+- Rotate/revoke exposed credentials, verify existing Grafana accounts, and assess historical copies.
+- Upgrade to a supported toolchain and test exact Docker/Compose/image versions.
+- Verify collection installation, passing CI, guest package availability, sudo, templates, and execution.
+- Check external cloud-init/template credentials, storage, disks, private Terraform state, SSH enrollment, and management addresses.
+- Validate monitoring scrapes/dashboards, network isolation, backup restores, repeat execution, and fresh deployment.
+- Review remaining supporting files and inactive role material.
+- Replace and validate scripts before re-enabling infrastructure operations.
 
-See docs/SECURITY_REMEDIATION.md for operating boundaries.
+No deployment, CI pass, credential rotation, history remediation, or successful restore is claimed. See docs/PIPELINE.md and docs/SECURITY_REMEDIATION.md.

@@ -1,15 +1,12 @@
 name: Static Configuration Checks
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   terraform:
     runs-on: ubuntu-latest
@@ -24,7 +21,6 @@ jobs:
       - run: terraform fmt -check -no-color
       - run: terraform init -backend=false -input=false
       - run: terraform validate -no-color
-
   ansible:
     runs-on: ubuntu-latest
     steps:
@@ -33,5 +29,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install 'ansible-core==2.16.14'
+      - run: ansible-galaxy collection install -r requirements.yml
+        working-directory: ansible
       - run: ansible-playbook --syntax-check -i inventory.ini playbook.yml
         working-directory: ansible
