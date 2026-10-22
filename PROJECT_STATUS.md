@@ -1,27 +1,26 @@
 # Project Status
 
-## Current environment
+The homelab is powered off. This is a learning project, not an operating production platform.
 
-The associated homelab is powered off. This repository is an infrastructure automation learning project, not an operating production service.
+## Source changes completed
 
-| Area | Evidence present | Status |
-|---|---|---|
-| Terraform | VM definitions, variables, outputs, provider lockfile | Fresh validation and deployment required |
-| Ansible | Playbook and role directories | Syntax and execution need verification |
-| CI | Static validation definitions | No successful run claimed until logs confirm it |
-| Vault | VM definition and supporting directory | Service deployment not verified |
-| Monitoring | Roles and supporting files | Running services and alerting not verified |
-| Backup and recovery | Earlier documentation | Successful restore not verified |
+- Validation-only GitHub and GitLab pipeline definitions.
+- Removed unsupported performance/uptime metrics and placeholder success jobs.
+- Removed tracked credential/local-variable files, state/backup, and generated provider artifacts from the current branch.
+- Expanded ignore rules while retaining the provider lockfile.
+- Removed hard-coded VM guest passwords and expanded SSH public-key paths.
+- Enabled SSH host-key checking without an inventory override.
+- Replaced the Windows-specific provider mirror with direct installation.
+- Removed unused authentication inputs; documented provider environment variables.
+- Added best-effort IP outputs and VM IDs for all three resources.
 
-## Cleanup progress
+## Still unverified or outstanding
 
-- Plaintext local credential file removed from the current branch.
-- Credential rotation and history remediation remain necessary.
-- Documentation no longer asserts unsupported performance or uptime metrics.
-- Placeholder deployment/test success jobs replaced with static validation.
-- Ignore rules expanded; previously tracked files still require explicit removal.
-- Demo guest credentials and external cloud-init configuration still require review before deployment.
+- Exposed credential rotation and historical-copy remediation.
+- Passing CI logs, fresh Terraform validation, and end-to-end deployment.
+- External cloud-init snippet, template credentials, disk-size compatibility, and SSH access.
+- Ansible role privileges, dependencies, and actual execution.
+- Running Vault/monitoring services and a successful backup restore.
+- Comprehensive review of supporting scripts and documentation.
 
-## Evidence needed later
-
-Record tool versions, actual commands, validation logs, deployment outcomes, and sanitized screenshots. Only publish measured improvements when the baseline, method, and results are documented.
+Removing a password from source does not update existing guests. Record actual commands, versions, logs, and outcomes before claiming deployment success or measured improvements.

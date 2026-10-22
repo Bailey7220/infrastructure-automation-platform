@@ -1,29 +1,10 @@
-variable "proxmox_url" {
-  description = "Proxmox API URL"
-  type        = string
-  default     = "https://192.168.14.4:8006/api2/json"
-}
-
-variable "proxmox_user" {
-  description = "Proxmox username"
-  type        = string
-  default     = "root@pam"
-}
-
-variable "proxmox_password" {
-  description = "Proxmox password"
-  type        = string
-  sensitive   = true
-}
-
 variable "proxmox_node" {
-  description = "Proxmox node name"
+  description = "Existing Proxmox node for the lab VMs."
   type        = string
-  default     = "proxmox"
 }
 
 variable "ssh_public_key" {
-  description = "SSH public key file path"
+  description = "Guest SSH public-key path; expanded with pathexpand before reading."
   type        = string
-  default     = "~/.ssh/id_rsa.pub"
+  default     = "~/.ssh/proxmox_lab.pub"
 }
