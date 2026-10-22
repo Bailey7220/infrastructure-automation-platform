@@ -2,8 +2,6 @@
 
 A personal infrastructure-as-code project using Terraform VM definitions and Ansible configuration roles to practice repeatable Proxmox lab setup.
 
-> The homelab is powered off. Source configuration is present, but a fresh end-to-end deployment and passing CI results have not been verified. This is not an active production platform.
-
 [Status](PROJECT_STATUS.md) | [Terraform](terraform/) | [Ansible](ansible/) | [Related homelab](https://github.com/Bailey7220/Systems_and_Security_Homelab)
 
 ## Purpose and workflow
@@ -14,9 +12,6 @@ Practice VM resource definitions, role-based configuration management, and stati
 Terraform -> Proxmox VMs -> verified addresses -> local Ansible inventory
 Ansible roles -> guest configuration -> actual connectivity/service checks
 ```
-
-The inventory handoff is manual; this is not a verified end-to-end deployment pipeline.
-
 ## VM definitions
 
 | VM | vCPU | RAM | Disk | Storage |
