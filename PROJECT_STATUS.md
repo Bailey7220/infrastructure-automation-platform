@@ -1,35 +1,52 @@
 # Project Status
 
-The homelab is powered off. This is a learning project, not an operating production platform. Source changes and passing static checks are not deployment evidence.
+## Cleanup-phase boundary
 
-## Reported static validation
+The bounded repository cleanup phase is complete as a source-review and static-validation milestone, not a deployment or comprehensive security certification. The last documented lab state is powered off. Deployment and cleanup scripts remain disabled. Further feature work and runtime verification are separate phases.
 
-On October 22, 2026, the repository owner reported that both Terraform and Ansible jobs passed in GitHub Actions after commit `e8652e7a51960ce972bc01026a3ef27475c33611` updated the Terraform CLI pins from 1.6.0 to 1.6.1. The preceding provider installation failed with `openpgp: key expired`; the provider version and lockfile were unchanged by the fix.
+## Validation evidence supplied on October 22, 2026
 
-This is an owner-reported result. A run URL, run ID, and job logs have not been independently recorded here. It does not establish passing GitLab checks, successful later commits, or a working deployment. See [the pipeline guide](docs/PIPELINE.md) for check boundaries and evidence requirements.
+| Check | Evidence and limitation |
+|---|---|
+| GitHub Terraform and Ansible checks | Owner reported passing after the Terraform CLI patch; Actions run links and complete job logs are not recorded here. |
+| Local Terraform formatting | Owner supplied terminal output showing no formatting errors. |
+| Local provider initialization and validation | Owner supplied successful Linux initialization and `Success! The configuration is valid.` after adding the Linux checksum. |
+| Local Ansible syntax | Owner supplied successful syntax-check output with Core 2.16.14 and the intended Linux-checkout configuration loaded. Empty inventory remains deliberate. |
+| Preflight regression workflow | Owner reported passing after commit `212b8a8`; exact Actions run links and job logs are not recorded here. |
 
-## Source corrections present
+These observations do not establish results for subsequent commits, GitLab, or live services. Repository source was inspected; the reviewer did not independently execute the local commands or inspect complete Actions run logs.
 
-- Static-only GitHub and GitLab pipeline definitions; collection installation is now explicit.
-- Terraform CLI pinned to 1.6.1 in both CI configurations.
-- SSH arguments require host-key checking; deploy and cleanup scripts remain blocked.
-- Monitoring template requires a runtime Grafana secret, binds published ports to loopback, and does not enable the Prometheus lifecycle API.
-- Added community.docker 3.13.3 as a compatibility bridge for the existing Core 2.16.14 pin, not a supported-toolchain claim.
-- Active web and monitoring tasks use fully qualified Compose v2 modules; common tasks no longer install pip Docker/Compose v1 packages or rely on newly granted Docker group access.
-- Common role checks Compose version and uses explicit privilege escalation for Docker operations.
-- Monitoring passes an explicit secret to remote Compose under no_log; endpoint checks use guest loopback with explicit retry conditions.
-- Pipeline documentation describes static checks only and records the owner-reported GitHub result.
-- Previously documented current-branch credential/state/artifact cleanup does not establish historical remediation.
+## Changes retained
 
-## Still outstanding
+- Terraform CLI 1.6.1 in both CI configurations fixed the reported expired-key installation failure; the Proxmox provider remains 0.57.1.
+- Commit `78808fa` added the verified Linux provider checksum; Windows checksums were already present.
+- Commit `8ef54bc` enforces LF shell-script checkout through `.gitattributes`.
+- Commit `a5b9c33` added GitHub shell syntax and carriage-return checks.
+- Local preflight checks do not invoke infrastructure commands; fixture tests exercise six test cases with dummy inputs and command stubs.
+- Active common, webserver, and monitoring roles use the reviewed Compose v2 approach. Monitoring requires a private Grafana secret and publishes ports on guest loopback.
+- SSH host-key verification remains required; deploy and destroy automation remain blocked.
 
-- Rotate/revoke exposed credentials, verify existing Grafana accounts, and assess historical copies.
-- Record the GitHub run URL, commit SHA, and job conclusions; verify GitLab results separately and check subsequent commits independently.
-- Upgrade to a supported toolchain and test exact Docker/Compose/image versions.
-- Verify guest package availability, sudo, templates, and actual role execution. The reported static-check pass does not cover these runtime prerequisites.
-- Check external cloud-init/template credentials, storage, disks, private Terraform state, SSH enrollment, and management addresses.
-- Validate monitoring scrapes/dashboards, network isolation, backup restores, repeat execution, and fresh deployment.
-- Review remaining supporting files and inactive role material.
-- Replace and validate scripts before re-enabling infrastructure operations.
+Terraform 1.6.1, Core 2.16.14, and community.docker 3.13.3 are compatibility pins, not a supported-toolchain claim.
 
-No deployment, credential rotation, history remediation, or successful restore is claimed. See [the pipeline guide](docs/PIPELINE.md) and [security remediation](docs/SECURITY_REMEDIATION.md).
+## Bounded supporting-file review
+
+- `docs/architecture.md` describes intended relationships, not a verified topology.
+- `docs/metrics.md` separates evidence and future measurement from unsupported performance claims.
+- Top-level monitoring configuration and setup files are empty placeholders, documented in `monitoring/README.md`; implementation source is in the Ansible monitoring role.
+- `vault/vault-policy.hcl` is empty; there is no Vault role in the active playbook. `vault/README.md` explains this boundary.
+- `ansible/roles/ansible-common/tasks/main.yml` is empty inactive material; the active playbook uses `common`, not `ansible-common`.
+
+This review does not certify all Git history, external templates, container images, or dependencies as safe.
+
+## Separate follow-up work
+
+- Record exact Actions run URLs, commit SHAs, versions, and conclusions; verify GitLab independently if retained as a supported path.
+- Rotate/revoke exposed credentials, verify existing Grafana accounts, and assess historical copies. Source cleanup does not accomplish these actions.
+- Upgrade to a supported toolchain and select/test exact Docker, Compose, and container image versions.
+- Verify private state, external cloud-init/template credentials, template disk sizes, storage, bridge, guest-agent availability, SSH fingerprints, management addresses, packages, and sudo.
+- Perform a reviewed deployment, monitoring checks, repeat execution, network-isolation checks, and an isolated restore test.
+- Design and test replacement deployment/destruction workflows before enabling them.
+
+No live deployment, credential rotation, history remediation, measured uptime, time savings, working Vault integration, or successful restore is claimed.
+
+[Pipeline](docs/PIPELINE.md) | [Security remediation](docs/SECURITY_REMEDIATION.md) | [Measurement plan](docs/metrics.md)

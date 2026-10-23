@@ -1,44 +1,45 @@
 # Static Validation Pipeline
 
-## Scope
+## Scope and compatibility pins
 
-GitHub and GitLab define static checks only. Neither provisions infrastructure nor deploys Ansible workloads.
+GitHub and GitLab define static checks only. Neither provisions infrastructure nor deploys Ansible workloads. Terraform 1.6.1, Ansible Core 2.16.14, and community.docker 3.13.3 are compatibility pins, not a supported-toolchain claim.
 
-## Reported validation result
-
-On October 22, 2026, the repository owner reported that both Terraform and Ansible jobs passed in GitHub Actions after commit `e8652e7a51960ce972bc01026a3ef27475c33611` updated the Terraform CLI pin from 1.6.0 to 1.6.1. This is an owner-reported result; a run URL, run ID, and job logs have not been independently recorded here. It does not establish a passing GitLab pipeline or successful lab deployment.
-
-The preceding failure occurred during provider installation: `bpg/proxmox` v0.57.1 could not be installed because signature checking returned `openpgp: key expired`. The patch changed only the Terraform CLI pins in the two CI files; the provider version and lockfile were left unchanged.
-
-| Step | Purpose | Boundary |
+| Workflow | Coverage | Boundary |
 |---|---|---|
-| Terraform formatting | Check source formatting | Not runtime correctness |
-| Terraform initialization | Install required providers without backend initialization | Not lab authentication or deployment |
-| Terraform validation | Check configuration against installed providers | Not a successful plan/apply |
-| Collection installation | Install `ansible/requirements.yml` | Not guest dependency installation |
-| Ansible syntax check | Resolve tasks and check playbook syntax | Not role execution or service health |
+| GitHub: Static Configuration Checks | Terraform formatting, provider initialization without backend initialization, configuration validation, collection installation, Ansible syntax, and `scripts/*.sh` syntax/carriage-return checks | No infrastructure deployment or shell-script behavior verification in the syntax job |
+| GitHub: Preflight Regression Tests | Six Python unittest cases using temporary dummy files, fake authentication values, and command stubs | Tests preflight presence-check behavior, not real credentials, public keys, or lab readiness |
+| GitLab static pipeline | Terraform formatting/init/validation and Ansible collection installation/syntax | Does not include the added GitHub shell or preflight regression jobs; passing GitLab results are not recorded |
 
-The configuration selects Terraform 1.6.1, Ansible Core 2.16.14, and community.docker 3.13.3. These compatibility pins are not a supported-toolchain claim. A supported-toolchain upgrade remains separate work.
+The regression tests check usage errors, token and password input paths, six missing prerequisites together, incomplete authentication inputs, and an empty key file. Each invocation checks that dummy authentication values are absent from output and that stubbed infrastructure commands were not invoked. This is not a general secret-leak or network-isolation audit.
 
-## Compose migration status
+## Reported results and fixes
 
-Active web and monitoring roles use `community.docker.docker_compose_v2`. The common role checks for Compose 2.18 or newer. Collection installation is explicit in CI; the owner-reported GitHub pass covers that static-check workflow, not execution on guests.
+On October 22, 2026, the owner reported GitHub Terraform and Ansible checks passing after the CLI update from 1.6.0 to 1.6.1 addressed `openpgp: key expired` during installation of `bpg/proxmox` 0.57.1.
 
-Guest package availability, actual role execution, and end-to-end behavior still require testing. Monitoring readiness checks target guest loopback with explicit retries; their presence is not evidence of a successful deployment.
+The owner then supplied successful local Terraform and Ansible static-check output from Ubuntu WSL. Commit `78808fa` added a Linux provider checksum without changing the provider version. Commit `8ef54bc` added shell LF checkout rules, and `a5b9c33` added shell checks. The owner reported the preflight regression workflow passing after `212b8a8`.
 
-## What CI does not do
+Exact Actions run URLs and complete job logs have not been recorded or independently reviewed here. These reports do not prove later commits pass. See [project status](../PROJECT_STATUS.md) for the evidence boundary.
 
-No Terraform apply/destroy, Ansible deployment, dynamic inventory generation, comprehensive secret scan, service health verification, monitoring setup, backup testing, or performance measurement is claimed. Deployment and cleanup scripts remain disabled pending replacement and testing.
+## Local verification
 
-## Secrets and runtime
+Use a Linux checkout with trustworthy permissions and the intended tool versions. Ansible should load `ansible/ansible.cfg`; do not bypass its world-writable-directory protection.
 
-Do not supply lab passwords or SSH private keys merely to make static checks pass. Deliberate local deployment uses the provider-supported `PROXMOX_VE_*` variables described in the README. The Grafana role requires a private runtime secret. Existing credentials and historical exposure require separate remediation.
+From the repository root, run commands individually and stop on failure:
 
-## Record reproducible evidence
+```sh
+terraform -chdir=terraform fmt -check -no-color
+terraform -chdir=terraform init -backend=false -input=false -lockfile=readonly
+terraform -chdir=terraform validate -no-color
+python3 -m unittest discover -s tests -p 'test_preflight.py' -v
+cd ansible
+ansible-galaxy collection install -r requirements.yml
+ansible-playbook --syntax-check -i inventory.ini playbook.yml
+```
 
-1. Open the repository Actions tab and select Static Configuration Checks for the exact commit under review.
-2. Inspect Terraform and Ansible job logs, including dependency installation.
-3. Record the run URL, commit SHA, and job conclusions without copying secrets into the repository.
-4. Treat subsequent commits as requiring their own checks; a previous passing run is not evidence for later changes.
+Network access is needed for dependency installation. For a new platform, use `terraform providers lock -platform=...` deliberately and review the resulting hashes; do not delete the lockfile, bypass verification, or upgrade providers to hide a checksum error.
 
-For GitLab, inspect and record equivalent job logs separately. No successful deployment is asserted by this guide.
+## Runtime and evidence boundaries
+
+Do not add lab passwords or SSH private keys to CI. Compose v2 tasks, guest-loopback readiness checks, and private Grafana inputs are source implementations, not successful runtime evidence. The inventory is deliberately inactive. Deployment and cleanup scripts remain disabled.
+
+Record each tested commit's run URL, SHA, versions, job conclusions, and sanitized evidence. Check GitLab separately. No apply/destroy, role execution, monitoring health, credential rotation, backup restoration, or performance measurement is established by these checks.
